@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "rmdir dist/ && tsc src/index.js"
+    "build": "rm -r dist & tsc",
+    "start": "node dist/index.js",
+    "build-png": "magick mogrify -format png -size 72x72 -background none -path assets/png/ assets/svg/*.svg"
   },
   "author": "",
   "license": "ISC",
