@@ -1,4 +1,9 @@
-import Discord, { DMChannel, MessageEmbed } from 'discord.js'
+import Discord, {
+  Collection,
+  DMChannel,
+  MessageEmbed,
+  MessageReaction,
+} from 'discord.js'
 import { promises } from 'fs'
 import path from 'path'
 import { tb_enabled } from '../commands/tanabata'
@@ -41,7 +46,7 @@ export async function tanabataHandler(message: Discord.Message) {
   const tb_path = path.join(process.env.TANABATA_DIR as string, tb_img)
 
   const confirmation = await message.channel.send(
-    'This is a preview of your message. React with ✅ to send it!',
+    'This is a preview of your message! React with ✅ to send it, or ⛔ to cancel.',
     authorEmbed(
       `attachment://${tb_img}`,
       message.content,
@@ -49,16 +54,26 @@ export async function tanabataHandler(message: Discord.Message) {
     ).attachFiles([tb_path])
   )
   await confirmation.react('✅')
+  await confirmation.react('⛔')
+
+  let reacts: Collection<String, MessageReaction>
 
   try {
-    await confirmation.awaitReactions(
+    reacts = await confirmation.awaitReactions(
       (reaction, user) => {
-        return reaction.emoji.name === '✅' && !user.bot
+        return (
+          (reaction.emoji.name === '✅' || reaction.emoji.name === '⛔') &&
+          !user.bot
+        )
       },
       { time: 30000, max: 1, errors: ['time'] }
     )
   } catch (error) {
     throw new CommandDefinedError('Timed out! Please try again.')
+  }
+
+  if (reacts.first()?.emoji.name === '⛔') {
+    throw new CommandDefinedError('Cancelled.')
   }
 
   await tb_channel.send(
