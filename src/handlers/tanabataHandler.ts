@@ -1,4 +1,5 @@
 import Discord, {
+  Channel,
   Collection,
   DMChannel,
   MessageEmbed,
@@ -18,28 +19,28 @@ export async function tanabataHandler(message: Discord.Message) {
       'Tanabata posting is not enabled. Try again later!'
     )
 
-  const log_channel = await client.channels.fetch(
-    process.env.TANABATA_LOG_CHANNEL_ID as string
-  )
+  let log_channel: Channel | null = null
+  try {
+    log_channel = await client.channels.fetch(
+      process.env.TANABATA_LOG_CHANNEL_ID as string
+    )
+  } catch (error) {}
+
   const tb_channel = await client.channels.fetch(
     process.env.TANABATA_CHANNEL_ID as string
   )
 
-  if (
-    !(
-      log_channel instanceof Discord.TextChannel &&
-      tb_channel instanceof Discord.TextChannel
-    )
-  )
-    return
+  if (!(tb_channel instanceof Discord.TextChannel)) return
 
-  await log_channel.send(
-    new MessageEmbed({
-      description: `**New tanabata wish from <@${message.author.id}>**\n${message.content}`,
-      color: 0x96c731,
-      timestamp: Date.now(),
-    })
-  )
+  if (log_channel instanceof Discord.TextChannel) {
+    await log_channel.send(
+      new MessageEmbed({
+        description: `**New tanabata wish from <@${message.author.id}>**\n${message.content}`,
+        color: 0x96c731,
+        timestamp: Date.now(),
+      })
+    )
+  }
 
   const tb_files = await promises.readdir(process.env.TANABATA_DIR as string)
   const tb_img = tb_files[Math.floor(Math.random() * tb_files.length)]
